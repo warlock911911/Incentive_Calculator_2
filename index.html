@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Manager Incentive Calculator</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #2A3950;
+            --secondary-color: #4CAFAA;
+            --accent-color: #FF6B6B;
+            --background-gradient: linear-gradient(135deg, #F8FBFE 0%, #E6F3FF 100%);
+            --header-gradient: linear-gradient(135deg, #2A3950 0%, #3F516B 100%);
+            --card-bg: #FFFFFF;
+            --text-color: #333333;
+            --border-color: #E0E7FF;
+            --result-bg: #F8FAFF;
+            --disclaimer-bg: #FFF3E0;
+        }
+
+        .dark-mode {
+            --primary-color: #4CAFAA;
+            --secondary-color: #3D9C96;
+            --background-gradient: linear-gradient(135deg, #1A1A1A 0%, #2D2D2D 100%);
+            --header-gradient: linear-gradient(135deg, #4CAFAA 0%, #2A3950 100%);
+            --card-bg: #2D2D2D;
+            --text-color: #F0F0F0;
+            --border-color: #444444;
+            --result-bg: #3A3A3A;
+            --disclaimer-bg: #443300;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background: var(--background-gradient);
+            color: var(--text-color);
+            transition: all 0.5s ease;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 30px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            transition: all 0.5s ease;
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            background: var(--header-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            text-align: center;
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+        }
+
+        .calculator-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-color);
+            font-size: 0.95rem;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: var(--result-bg);
+            color: var(--text-color);
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(76, 175, 170, 0.1);
+        }
+
+        button {
+            background: var(--secondary-color);
+            color: white;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            letter-spacing: 0.5px;
+            font-size: 1rem;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #3D9C96;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 170, 0.3);
+        }
+
+        .result-section {
+            background: var(--result-bg);
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid var(--border-color);
+            display: none;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .result-label {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .performance-red {
+            color: #FF4444;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .performance-yellow {
+            color: #FFAA33;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .performance-green {
+            color: #00C851;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .base-incentive {
+            color: #33B5E5;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .total-incentive {
+            color: #AA66CC;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .incentive-cap {
+            color: #FFBB33;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .disclaimer {
+            background: var(--disclaimer-bg);
+            color: var(--text-color);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 25px;
+            border-left: 4px solid var(--accent-color);
+            font-size: 0.9rem;
+        }
+
+        .author-signature {
+            text-align: center;
+            margin-top: 25px;
+            font-style: italic;
+            color: var(--text-color);
+            position: relative;
+        }
+
+        .author-name {
+            cursor: pointer;
+            display: inline-block;
+            position: relative;
+        }
+
+        .email-tooltip {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--primary-color);
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .author-name:hover .email-tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .progress-container {
+            margin: 20px 0;
+            height: 30px;
+            background: var(--result-bg);
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 15px;
+            transition: width 0.5s ease;
+            background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+
+        .chart-container {
+            margin-top: 30px;
+            position: relative;
+            height: 250px;
+        }
+
+        .visualization-section {
+            grid-column: span 2;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-top: 20px;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 100;
+        }
+
+        .pulse {
+            animation: pulse 0.5s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--secondary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .calculator-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.4rem;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <button class="theme-toggle" id="themeToggle">
+        <i class="fas fa-moon"></i>
+    </button>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="container">
+        <h1>BUSINESS MANAGER INCENTIVE CALCULATOR</h1>
+        
+        <div class="calculator-section">
+            <div>
+                <div class="form-group">
+                    <label>Select Slab</label>
+                    <select id="slab">
+                        <option value="7500">Slab 1 (0-3 Months)</option>
+                        <option value="11000">Slab 2 (4-6 Months)</option>
+                        <option value="15000" selected>Slab 3 (6+ Months)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Target Amount (in Cr)</label>
+                    <input type="number" id="target" value="200">
+                </div>
+                
+                <div class="form-group">
+                    <label>Achievement Amount (in Cr)</label>
+                    <input type="number" id="achievement" value="158">
+                </div>
+                
+                <button onclick="calculateIncentive()">CALCULATE INCENTIVE</button>
+            </div>
+            
+            <div class="result-section" id="result">
+                <h3 style="margin-top: 0; color: var(--primary-color);">CALCULATION RESULT</h3>
+                <div class="result-item">
+                    <span class="result-label">Performance Percentage:</span>
+                    <span id="performancePercent"></span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Base Incentive:</span>
+                    <span class="base-incentive" id="baseIncentive"></span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Total Incentive:</span>
+                    <span class="total-incentive" id="totalIncentive"></span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Incentive Cap:</span>
+                    <span class="incentive-cap" id="incentiveCap"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="visualization-section">
+            <h3 style="margin-top: 0; color: var(--primary-color);">PERFORMANCE VISUALIZATION</h3>
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar">0%</div>
+            </div>
+            <div class="chart-container">
+                <canvas id="incentiveChart"></canvas>
+            </div>
+        </div>
+
+        <div class="disclaimer">
+            <strong>Note:</strong> This calculation shows tentative figures only. Actual incentives may vary based on official calculations and internal policies.
+        </div>
+
+        <div class="author-signature">
+            Developed by <span class="author-name">Neeraj Verma
+                <span class="email-tooltip">neeraj.verma@rupyy.com</span>
+            </span>
+        </div>
+    </div>
+
+    <script>
+        let incentiveChart;
+        let isDarkMode = false;
+
+        // Theme Toggle Functionality
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            isDarkMode = !isDarkMode;
+            document.body.classList.toggle('dark-mode', isDarkMode);
+            const icon = document.querySelector('#themeToggle i');
+            icon.classList.toggle('fa-moon', !isDarkMode);
+            icon.classList.toggle('fa-sun', isDarkMode);
+            localStorage.setItem('darkMode', isDarkMode);
+            
+            // Update chart colors if it exists
+            if (incentiveChart) {
+                incentiveChart.update();
+            }
+        });
+
+        // Load saved theme preference
+        if (localStorage.getItem('darkMode') === 'true') {
+            isDarkMode = true;
+            document.body.classList.add('dark-mode');
+            const icon = document.querySelector('#themeToggle i');
+            icon.classList.remove('fa-moon');
+            icon.classList.add('fa-sun');
+        }
+
+        // Calculate Incentive with Core Slab Logic
+        function calculateIncentive() {
+            // Show loading overlay
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            
+            // Get input values
+            const slab = document.getElementById('slab').value;
+            const target = parseFloat(document.getElementById('target').value);
+            const achievement = parseFloat(document.getElementById('achievement').value);
+            
+            // Validate inputs
+            if (isNaN(target) || isNaN(achievement) || target <= 0) {
+                alert("Please enter valid target and achievement amounts");
+                document.getElementById('loadingOverlay').style.display = 'none';
+                return;
+            }
+            
+            // Calculate performance percentage
+            const performancePercent = (achievement / target) * 100;
+            
+            // Determine incentive parameters based on slab
+            let baseIncentivePercent, additionalPercent, rangeStart;
+            
+            if (performancePercent >= 111) {
+                baseIncentivePercent = 120;
+                additionalPercent = 2.5;
+                rangeStart = 111;
+            } else if (performancePercent >= 91) {
+                baseIncentivePercent = 90;
+                additionalPercent = 1.5;
+                rangeStart = 91;
+            } else if (performancePercent >= 75) {
+                baseIncentivePercent = 75;
+                additionalPercent = 1;
+                rangeStart = 75;
+            } else {
+                baseIncentivePercent = 0;
+                additionalPercent = 0;
+            }
+            
+            // Calculate incentives
+            const baseAmount = parseFloat(slab);
+            const additionalIncentive = performancePercent >= 75 
+                ? (performancePercent - rangeStart) * additionalPercent 
+                : 0;
+            
+            const totalIncentivePercent = baseIncentivePercent + additionalIncentive;
+            const incentiveAmount = (baseAmount * totalIncentivePercent) / 100;
+            const incentiveCap = baseAmount * 2;
+            const finalIncentive = Math.min(incentiveAmount, incentiveCap);
+            
+            // Display results with appropriate colors
+            const performanceElement = document.getElementById('performancePercent');
+            performanceElement.textContent = `${performancePercent.toFixed(2)}%`;
+            
+            // Set performance percentage color
+            if (performancePercent < 75) {
+                performanceElement.className = 'performance-red';
+            } else if (performancePercent < 100) {
+                performanceElement.className = 'performance-yellow';
+            } else {
+                performanceElement.className = 'performance-green';
+            }
+            
+            document.getElementById('baseIncentive').textContent = `₹${baseAmount.toLocaleString()}`;
+            document.getElementById('totalIncentive').textContent = `₹${finalIncentive.toLocaleString()}`;
+            document.getElementById('incentiveCap').textContent = `₹${incentiveCap.toLocaleString()}`;
+            
+            // Update progress bar
+            const progressBar = document.getElementById('progressBar');
+            const progressPercent = Math.min(performancePercent, 100);
+            progressBar.style.width = `${progressPercent}%`;
+            progressBar.textContent = `${progressPercent.toFixed(1)}%`;
+            
+            // Update chart
+            updateChart(baseAmount, finalIncentive, incentiveCap);
+            
+            // Show results with animation
+            document.getElementById('result').style.display = 'block';
+            document.getElementById('result').classList.add('pulse');
+            
+            // Hide loading overlay
+            document.getElementById('loadingOverlay').style.display = 'none';
+            
+            // Remove pulse animation after it completes
+            setTimeout(() => {
+                document.getElementById('result').classList.remove('pulse');
+            }, 500);
+        }
+
+        function updateChart(baseAmount, finalIncentive, incentiveCap) {
+            const ctx = document.getElementById('incentiveChart').getContext('2d');
+            
+            // Destroy previous chart if exists
+            if (incentiveChart) {
+                incentiveChart.destroy();
+            }
+            
+            incentiveChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Base Incentive', 'Additional Incentive', 'Remaining Potential'],
+                    datasets: [{
+                        data: [
+                            baseAmount,
+                            Math.max(0, finalIncentive - baseAmount),
+                            Math.max(0, incentiveCap - finalIncentive)
+                        ],
+                        backgroundColor: [
+                            '#33B5E5',
+                            '#AA66CC',
+                            '#FFBB33'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                font: {
+                                    weight: 'bold'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ₹${context.raw.toLocaleString()}`;
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        animateScale: true,
+                        animateRotate: true
+                    }
+                }
+            });
+        }
+
+        // Initialize with default calculation
+        window.onload = function() {
+            calculateIncentive();
+        };
+    </script>
+</body>
+</html>
